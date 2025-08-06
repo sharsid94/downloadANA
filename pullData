@@ -1,0 +1,86 @@
+##############################
+## Script to download and process ANA Data 
+##############################
+
+## Load Libraries
+library(httr)
+library(xml2)
+library(reshape2)
+library(readxl)
+library(sf)
+
+## Import metadata
+amazon_boundary <- read_sf('C:/Users/shars/Documents/ANA/cuencas2024/Cuencas.shp')
+amazon_boundary <- amazon_boundary[amazon_boundary$nombrecuen != 'Plata' & amazon_boundary$nombrecuen != 'Costa Atlántica',]
+
+meta <- read_sf('C:/Users/shars/Documents/ANA/geoft_estacao_hidrometeorologica.gpkg')
+meta <- meta[meta$TipoEstacao == 'Fluviométrica',]
+meta <- meta[amazon_boundary,] ## select intersecting stations
+
+stationCodes <- meta$CodigoEstacao
+##Access ANA Database
+for (i in 1740:length(stationCodes)) {
+  codEstacao = stationCodes[i]
+  bodyPOST = paste0("codEstacao=",codEstacao,
+                    "&dataInicio=01/01/1980&dataFim=31/12/2024&tipoDados=3&nivelConsistencia=") #1-Bruto ou 2-Consistido
+  b2 <- "http://telemetriaws1.ana.gov.br/ServiceANA.asmx/HidroSerieHistorica"
+  xml = POST(b2, body = bodyPOST, content_type("application/x-www-form-urlencoded"))
+  xml.doc = content(xml)
+
+  ##Extract data from list object
+  xml.list <- xml2::as_list(xml.doc) 
+  xml.data <- xml.list$DataTable$diffgram$`DocumentElement` #207 elements represent 207 months, from most recent to 2001 about 17 years this makes sense
+
+  station.data <- matrix(ncol=length(xml.data),nrow = 31) #we want to make a data frame with 31 rows and length(xml.data columns)
+  if (length(is.na(station.data))==31) {
+    next #if no data for this station go onto next iteration
+    print("Skipping this iteration")} 
+  ##get first and last vazao index
+  for (j in 1:length(xml.data)) { #j for each record, rows 1:LOD
+    month <- xml.data[[j]] #represents month of which we want to extract the 28-31 flows
+    #if (month$NivelConsistencia=="1"){next} #catch mechanism for consistencia bruto
+    df <- as.data.frame(unlist(month[16:46])) #need to find a way of putting each value from 1 to 31 or NA
+    if(length(df)==0) next
+    day_indx = as.numeric(gsub("Vazao","",rownames(df)))
+    if(j == 1) {
+      maxDay = max(day_indx)
+      }
+    else if(j==length(xml.data)) {
+      minDay = min(day_indx)
+      }
+    station.data[day_indx,j] <- as.numeric(as.character(df[,1])) 
+  } 
+  stationData <- melt(station.data,na.rm=F)
+  colnames(stationData) <- c("day","monthX","discharge")
+  ## Add dates (get this info from the original list object)
+  dates = list()
+  for (k in 1:length(xml.data)) {
+    date = xml.data[k]$SerieHistorica$DataHora
+    date = as.character(date)
+    dates[[k]] <- date
+  } #now we have our YYYY-MM vectors to append to stationData!
+  ##Add years, months and combine to final date
+  stationData$year <- substr(dates,1,4)
+  combo = paste(substr(dates,6,7),substr(dates,1,4),sep="-")
+  #stationData$month <- substr(dates,6,7)
+  colnames(station.data) <- combo
+  stationData = melt(station.data)
+  colnames(stationData) <- c("day","MY","flow")
+  stationData$date = as.Date(paste(stationData$day,stationData$MY,sep="-"),"%d-%m-%Y")
+  stationData$date <- as.Date(stationData$date)
+  stationData <- stationData[order(as.Date(stationData$date, format="%d-%m-%Y")),c(4,3)]
+  stationData <- stationData[complete.cases(stationData$flow),]
+  outName = paste0("ANA_",codEstacao,".csv")
+  write.csv(stationData,outName)
+  print(i)
+}
+
+ANA_files <- list.files(pattern="ANA") 
+
+## Common troubleshooting tips:
+## Multiple flow values for one day - stil under analysis by ANA
+#### best solution here is to only take 'settled data'
+
+
+# http://www.snirh.gov.br/hidroweb/serieshistoricas
+# http://telemetriaws1.ana.gov.br/ServiceANA.asmx?op=HidroSerieHistorica
