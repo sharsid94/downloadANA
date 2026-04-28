@@ -1,0 +1,14 @@
+Package: downloadANA
+Type: Package
+Title: Download and Process ANA Hydrological Data
+Version: 0.1.0
+Author: Sharmin Siddiqui
+Maintainer: Sharmin Siddiqui <sharsid94@gmail.com>
+Description: Tools to download and process hydrological station data from the Brazilian ANA telemetric system.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Imports:
+    httr,
+    xml2
+RoxygenNote: 7.3.3
