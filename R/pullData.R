@@ -174,3 +174,9 @@ df <- download_ana_flow(station_codes,start_date = "01/01/2025", end_date = "31/
 
 
 devtools::load_all()
+
+usethis::use_git()
+usethis::use_git_config(
+  user.name = "Shar Siddiqui",
+  user.email = "sharsid94@gmail.com"
+)
