@@ -11,5 +11,5 @@ meta_filtered <- select_stations(meta, c("RIO AMAZONAS", "RIO TOCANTINS"))
 station_codes <- unique(meta_filtered$CodigoEstacao[140:145]) ## as an example, note: not all ANA stations will have data
 df <- download_ana_flow(station_codes,start_date = "01/01/2025", end_date = "31/12/2025")
 
-# If you get a CRAN mirror error, run:
+**If you get a CRAN mirror error, run:**
 options(repos = c(CRAN = "https://cloud.r-project.org"))
