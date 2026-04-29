@@ -5,7 +5,8 @@ To download, run the following commands:
 install.packages("remotes")
 remotes::install_github("sharsid94/downloadANA", ref = "master")
 
-Once loaded, the following functions can be run:
+
+**Once loaded, the following functions can be run:**
 
 meta <- get_ana_metadata()
 meta_filtered <- select_stations(meta, c("RIO AMAZONAS", "RIO TOCANTINS"))
