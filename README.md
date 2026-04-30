@@ -1,6 +1,10 @@
 downloadANA is an R package intended to download historical hydrological records from the Brazilian Agencia Nacional das Aguas into a clean, easy to analyze, dataframe format.
 
-To download, run the following commands: install.packages("remotes") remotes::install_github("sharsid94/downloadANA", ref = "master")
+To download, run the following commands: 
+
+install.packages("pak")
+
+pak::pak("sharsid94/downloadANA")
 
 Once loaded, the following functions can be run:
 
