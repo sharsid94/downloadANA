@@ -2,9 +2,11 @@ downloadANA is an R package intended to download historical hydrological records
 
 To download, run the following commands: 
 
+#Download Package installer
 install.packages("pak")
-
-pak::pak("sharsid94/downloadANA")
+#Install package
+pak::pak("sharsid94/downloadANA@master")
+library(downloadANA)
 
 Once loaded, the following functions can be run:
 
